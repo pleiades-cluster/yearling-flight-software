@@ -1,70 +1,33 @@
-"""
-PyCubed Beep-Sat Demo (advanced)
-    - improved fault handling & tolerance
-    - low power mode
-    - logging data to sd card
-    - over the air commands
-
-
-M. Holliday
-"""
 '''
-print('\n{lines}\n{:^40}\n{lines}\n'.format('Sapling',lines='-'*40))
+General rainbow routine for neopixel adapted from Adafruit Neopixel example.
+Should work on all PyCubed boards with a "NEOPIXEL" pin defined in firmware.
 
-print('Initializing PyCubed Hardware...')
-import os, tasko, traceback
+M.Holliday
+pycubed.org
+'''
 from pycubed import cubesat
-print('Finished initializing PyCubed Hardware')
+import time
 
-# create asyncio object
-cubesat.tasko=tasko
-# Dict to store scheduled objects by name
-cubesat.scheduled_tasks={}
+cubesat.neopixel.auto_write=False
+# cubesat.neopixel.brightness=1
 
-print('Loading Tasks...',end='')
-# schedule all tasks in directory
-for file in os.listdir('Tasks'):
-    # remove the '.py' from file name
-    file=file[:-3]
+def wheel(pos):
+    if pos < 0 or pos > 255:
+        return (0, 0, 0)
+    if pos < 85:
+        return (255 - pos * 3, pos * 3, 0)
+    if pos < 170:
+        pos -= 85
+        return (0, 255 - pos * 3, pos * 3)
+    pos -= 170
+    return (pos * 3, 0, 255 - pos * 3)
 
-    # ignore these files
-    if file in ("template_task","test_task","listen_task"):
-        continue
+def rainbow_cycle(wait):
+    for j in range(255):
+        cubesat.RGB = wheel(j & 255)
+        cubesat.neopixel.show()
+        time.sleep(wait)
 
-    # auto-magically import the task file
-    exec('import Tasks.{}'.format(file))
-    # create a helper object for scheduling the task
-    task_obj=eval('Tasks.'+file).task(cubesat)
-
-    # determine if the task wishes to be scheduled later
-    if hasattr(task_obj,'schedule_later'):
-        schedule=cubesat.tasko.schedule_later
-    else:
-        schedule=cubesat.tasko.schedule
-
-    # schedule each task object and add it to our dict
-    cubesat.scheduled_tasks[task_obj.name]=schedule(task_obj.frequency,task_obj.main_task,task_obj.priority)
-print(len(cubesat.scheduled_tasks),'total')
-
-print('Running...')
-try:
-    # should run forever
-    cubesat.tasko.run()
-except Exception as e:
-    formated_exception = traceback.format_exception(e, e, e.__traceback__)
-    print(formated_exception)
-    try:
-        # increment our NVM error counter
-        cubesat.c_state_err+=1
-        # try to log everything
-        cubesat.log('{},{},{}'.format(formated_exception,cubesat.c_state_err,cubesat.c_boot))
-    except:
-        pass
-
-# we shouldn't be here!
-print('Engaging fail safe: hard reset')
-from time import sleep
-sleep(10)
-cubesat.micro.on_next_reset(cubesat.micro.RunMode.NORMAL)
-cubesat.micro.reset()
-'''
+######################### MAIN LOOP ##############################
+while True:
+     rainbow_cycle(0.1) # change value to adjust speed

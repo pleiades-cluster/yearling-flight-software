@@ -1,3 +1,2 @@
-Adafruit CircuitPython 7.3.0-beta.2 on 2022-04-27; PyCubedv05 with samd51j19
-Board ID:pycubed_v05
-boot.py output:
+Adafruit CircuitPython 7.3.1 on 2022-06-22; PyCubedv05-MRAM with samd51j19
+Board ID:pycubed_mram_v05
